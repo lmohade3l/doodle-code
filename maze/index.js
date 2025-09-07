@@ -15,6 +15,8 @@ console.log('mapWithPoints length:', mapWithPoints.toArray().length);
 const n = 3;
 const emptyArray = new Array(n ** 2).fill(undefined)
 const roomList = emptyArray.map((_, i) => [point(i % n, Math.floor(i / n)), List()])
+
+console.log({roomList})
 const grid = Map(roomList)
 
-console.log('Grid size:', grid.size);
+console.log('Grid', grid);
