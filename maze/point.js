@@ -20,3 +20,13 @@ const point = (x, y) => {
     allPoints.set(newPoint)
     return newPoint
 }
+
+export const NORTH = point(0, -1);
+export const EAST = point(1, 0);
+export const SOUTH = point(0, 1);
+export const WEST = point(-1, 0);
+
+export const addPoint = (a, b) => point(
+  a.x + b.x,
+  a.y + b.y
+);
