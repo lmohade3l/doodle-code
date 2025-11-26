@@ -1,0 +1,8 @@
+{
+    "id" : "/",
+    "start_url": "/",
+    "scope":"/",
+    "name" : "CodePadMasters",
+    "short_name" : "CodePad",
+    "display" : "standalone"
+}
