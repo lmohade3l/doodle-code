@@ -2,21 +2,30 @@
 
 var curFib = 0;
 
-// TODO
-
-self.postMessage('hello from the webworker')
+self.postMessage("hello from the webworker");
 
 self.onmessage = onMessage;
 
 // **********************************
 
-function onMessage (evt) {
-	console.log('received in the webworker: ', evt.data)
+function onMessage(evt) {
+  getNextFib()
+}
+
+function getNextFib() {
+  var fibNum = fib(curFib);
+  self.postMessage({
+    fib: fibNum,
+    idx: curFib,
+  });
+
+  curFib++;
+  setTimeout(getNextFib , 0)
 }
 
 function fib(n) {
-	if (n < 2) {
-		return n;
-	}
-	return fib(n-1) + fib(n-2);
+  if (n < 2) {
+    return n;
+  }
+  return fib(n - 1) + fib(n - 2);
 }

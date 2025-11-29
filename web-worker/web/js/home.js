@@ -38,6 +38,7 @@
 		worker = new Worker("/js/worker.js")
 
 		worker.addEventListener('message' , onMessage)
+		worker.postMessage({start: true})
 	}
 
 	function stopFibs() {
@@ -46,12 +47,11 @@
 
 		startStopBtn.innerText = "Start";
 
-		// TODO
+		worker.terminate()
 	}
 
 	function onMessage (evt) {
-		console.log(evt.data)
-		worker.postMessage('hello from home')
+		renderFib(evt.data.idx , evt.data.fib)
 	}
 
 })();
