@@ -1,1 +1,3 @@
-# H1 title (maze)
+# Maze
+## Generating a maze with Javascript
+
