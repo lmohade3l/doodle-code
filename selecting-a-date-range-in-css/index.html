@@ -1,107 +1,71 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title></title>
-    </head>
 
-    <body>
-        <div class="main-container">
-            <div class="container">
-                <div class="selected-date">
-                    <p>no selected date</p>
-                </div>
+<head>
+    <title>selecting a date range in css</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
 
-                <div class="grid-container">
-                    <p class="week-day">mon</p>
-                    <p class="week-day">tue</p>
-                    <p class="week-day">wed</p>
-                    <p class="week-day">thu</p>
-                    <p class="week-day">fri</p>
-                    <p class="week-day">sat</p>
-                    <p class="week-day">sun</p>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <div class="selected-date">
+                <p>no selected date</p>
+            </div>
 
-                    <p class="date">01</p>
-                    <p class="date">02</p>
-                    <p class="date">03</p>
-                    <p class="date">04</p>
-                    <p class="date">05</p>
-                    <p class="date">06</p>
-                    <p class="date">07</p>
-                    <p class="date">08</p>
-                    <p class="date">09</p>
-                    <p class="date">10</p>
-                    <p class="date">11</p>
-                    <p class="date">12</p>
-                    <p class="date">13</p>
-                    <p class="date">14</p>
-                    <p class="date">15</p>
-                    <p class="date">16</p>
-                    <p class="date">17</p>
-                    <p class="date">18</p>
-                    <p class="date">19</p>
-                    <p class="date">20</p>
-                    <p class="date">21</p>
-                    <p class="date">22</p>
-                    <p class="date">23</p>
-                    <p class="date">24</p>
-                    <p class="date">25</p>
-                    <p class="date">27</p>
-                    <p class="date">28</p>
-                    <p class="date">29</p>
-                    <p class="date">30</p>
-                    <p class="date">31</p>
-                    
-                </div>
+            <div class="grid-container">
+                <p class="week-day">mon</p>
+                <p class="week-day">tue</p>
+                <p class="week-day">wed</p>
+                <p class="week-day">thu</p>
+                <p class="week-day">fri</p>
+                <p class="week-day">sat</p>
+                <p class="week-day">sun</p>
+
+                <p class="date">01</p>
+                <p class="date">02</p>
+                <p class="date">03</p>
+                <p class="date">04</p>
+                <p class="date">05</p>
+                <p class="date">06</p>
+                <p class="date">07</p>
+                <p class="date">08</p>
+                <p class="date">09</p>
+                <p class="date">10</p>
+                <p class="date">11</p>
+                <p class="date">12</p>
+                <p class="date">13</p>
+                <p class="date">14</p>
+                <p class="date">15</p>
+                <p class="date">16</p>
+                <p class="date">17</p>
+                <p class="date">18</p>
+                <p class="date">19</p>
+                <p class="date">20</p>
+                <p class="date">21</p>
+                <p class="date">22</p>
+                <p class="date">23</p>
+                <p class="date">24</p>
+                <p class="date">25</p>
+                <p class="date">27</p>
+                <p class="date">28</p>
+                <p class="date">29</p>
+                <p class="date">30</p>
+                <p class="date">31</p>
+
             </div>
         </div>
-    </body>
+    </div>
+</body>
 
-    <style>
-        .main-container {
-            width: 100dvw;
-            height: 100dvh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+<script>
+    const dateElements = document.querySelectorAll('.date')
 
-        .container {
-            width: 400px;
-            margin-bottom: 40px;
-        }
+    dateElements?.forEach((date , index) => {
+        date.addEventListener('click', () => {
+            date.classList.contains('selected') ? date.classList.remove('selected') : date.classList.add('selected')
+        })
+    })
+</script>
 
-        .selected-date {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .grid-container{
-            width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-            column-gap: 20px
-        }
-
-        .date {
-            border: 1px solid #000;
-            display: flex;
-            justify-content: center;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            cursor: pointer;
-        }
-
-        .selected {
-            background-color: cornflowerblue;
-        }
-
-        .week-day {
-            display: flex;
-            justify-content: center;
-        }
-    </style>
-
-    <script>
-        const selectedDate = document.getElementsByClassName('.date')
-    </script>
 </html>

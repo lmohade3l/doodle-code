@@ -1,0 +1,52 @@
+* {
+    margin: 0
+}
+
+.main-container {
+    width: 100dvw;
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 400px;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.selected-date {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.grid-container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 20px
+}
+
+.date {
+    border: 1px solid #b0afaf;
+    display: flex;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.selected {
+    background-color: cornflowerblue;
+    border: none;
+    color: #FFF;
+}
+
+.week-day {
+    display: flex;
+    justify-content: center;
+}
