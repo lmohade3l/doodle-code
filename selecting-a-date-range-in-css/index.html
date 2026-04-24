@@ -61,9 +61,31 @@
 <script>
     const dateElements = document.querySelectorAll('.date')
 
-    dateElements?.forEach((date , index) => {
+    dateElements?.forEach((date, index) => {
         date.addEventListener('click', () => {
+            const selectedDayOfMonth = Number(date.innerText)
+            const selectedElements = document.querySelectorAll('.selected')
+
+            const isAlreadySelected = (selectedElements?.[0]?.innerText === date.innerText) || selectedElements?.[1]?.innerText === date.innerText
+
+            // select dates
+            if (selectedElements?.length === 2 && !isAlreadySelected) {
+                if (selectedDayOfMonth < Number(selectedElements?.[0]?.innerText)) {
+                    selectedElements?.[0]?.classList.remove('selected')
+                } else {
+                    selectedElements?.[1]?.classList.remove('selected')
+                }
+            }
             date.classList.contains('selected') ? date.classList.remove('selected') : date.classList.add('selected')
+
+            // change bg on between dates
+            const updatesSelectedElements = document.querySelectorAll('.selected')
+            const start = Number(updatesSelectedElements?.[0]?.innerText)
+            const end = Number(updatesSelectedElements?.[1]?.innerText) - 1
+            for (let i = 0; i < 31; i++) {
+                if (start && end && i >= start && i < end) dateElements[i].classList.add('range-selected')
+                else dateElements[i].classList.remove('range-selected')
+            }
         })
     })
 </script>

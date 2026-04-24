@@ -46,6 +46,10 @@
     color: #FFF;
 }
 
+.range-selected {
+    background-color: rgb(228 239 253); 
+}
+
 .week-day {
     display: flex;
     justify-content: center;
