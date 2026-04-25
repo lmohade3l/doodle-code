@@ -13,7 +13,7 @@
                 <p>no selected date</p>
             </div>
 
-            <div class="grid-container">
+            <div class="grid-container" id="calendar">
                 <p class="week-day">mon</p>
                 <p class="week-day">tue</p>
                 <p class="week-day">wed</p>
@@ -58,7 +58,9 @@
     </div>
 </body>
 
-<script>
+
+<!-- without nth-child selector -->
+<!-- <script>
     const dateElements = document.querySelectorAll('.date')
 
     dateElements?.forEach((date, index) => {
@@ -88,6 +90,65 @@
             }
         })
     })
+</script> -->
+
+<script>
+    const CAL = document.getElementById('calendar');
+
+    CAL.addEventListener('click', (e) => {
+        const date = e.target.closest('.date');
+        if (!date) return;
+        console.log('what' , date)
+        // toggle selected
+        date.classList.toggle('selected');
+
+        // if three dates are selected
+        if (CAL.querySelector(':nth-child(3 of .date.selected)')) {
+
+            const clickedIndex = Array.from(CAL.querySelectorAll('.date')).indexOf(date);
+
+            const first = CAL.querySelector(':nth-child(1 of .date.selected)');
+            const second = CAL.querySelector(':nth-child(2 of .date.selected)');
+            const third = CAL.querySelector(':nth-child(3 of .date.selected)');
+
+            const firstIndex = Array.from(CAL.querySelectorAll('.date')).indexOf(first);
+            const secondIndex = Array.from(CAL.querySelectorAll('.date')).indexOf(second);
+            const thirdIndex = Array.from(CAL.querySelectorAll('.date')).indexOf(third);
+
+            console.log({clickedIndex} , {firstIndex} , {secondIndex} , {thirdIndex})
+
+            switch (clickedIndex) {
+                case firstIndex:
+                    second.classList.remove('selected');
+                    break;
+
+                case secondIndex:
+                    third.classList.remove('selected');
+                    break;
+
+                case thirdIndex:
+                    second.classList.remove('selected');
+                    break;
+            }
+        }
+
+        // range highlight
+        const startEl = CAL.querySelector(':nth-child(1 of .date.selected)');
+        const endEl = CAL.querySelector(':nth-child(2 of .date.selected)');
+
+        const allDates = Array.from(CAL.querySelectorAll('.date'));
+
+        const start = startEl ? allDates.indexOf(startEl) : null;
+        const end = endEl ? allDates.indexOf(endEl) : null;
+
+        allDates.forEach((el, i) => {
+            if (start !== null && end !== null && i > start && i < end) {
+                el.classList.add('range-selected');
+            } else {
+                el.classList.remove('range-selected');
+            }
+        });
+    });
 </script>
 
-</html>
+</html>\
