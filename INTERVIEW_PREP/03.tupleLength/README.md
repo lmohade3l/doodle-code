@@ -1,4 +1,4 @@
-# 1.1 Tuple Length
+# Tuple Length
 
 ## Problem
 
