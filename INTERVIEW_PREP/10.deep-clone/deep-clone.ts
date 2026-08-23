@@ -3,30 +3,36 @@ function detectType(a: any) {
     return Object.getPrototypeOf(a)?.constructor?.name?.toLowerCase() ?? 'object'
 }
 
-function deepClone(a: any) {
+function deepClone(a: any, cache = new WeakMap<object, any>()) {
     if (typeof a !== 'object') return a
 
     const typeA = detectType(a)
 
+    if (cache?.has(a)) {
+        return cache.get(a)
+    }
+
     switch (typeA) {
-        case 'map':{
+        case 'map': {
             const res = new Map()
+            cache?.set(a, res)
             const keys = a?.keys()
-            for(const key of keys){
-                res.set(key , deepClone(a.get(key)))
+            for (const key of keys) {
+                res.set(key, deepClone(a.get(key), cache))
             }
             return res
         }
         case 'object': {
             const res: any = {}
+            cache?.set(a, res)
             const keys = Object.keys(a)
             for (const key of keys) {
-                res[key] = deepClone(a[key])
+                res[key] = deepClone(a[key], cache)
             }
 
             return res
         }
-        case 'array' : {
+        case 'array': {
 
         }
     }
