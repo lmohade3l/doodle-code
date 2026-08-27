@@ -16,20 +16,24 @@ class MyPromise {
             this.value = value
             this.status = 'fulfilled'
             this.reason = undefined
-            this.onFulfilledCallbacks?.forEach(element => {
-                element(this.value)
-            });
+            queueMicrotask(() => {
+                this.onFulfilledCallbacks.forEach(element => {
+                    element(this.value)
+                })
+            })
         }
-        
+
         const reject = (err) => {
             if (this.status !== 'pending') return
 
             this.status = 'rejected'
             this.value = undefined
             this.reason = err
-            this.onRejectedCallbacks?.forEach(element => {
-                element(this.reason)
-            });
+            queueMicrotask(() => {
+                this.onRejectedCallbacks.forEach(element => {
+                    element(this.reason)
+                })
+            })
         }
 
         try {
