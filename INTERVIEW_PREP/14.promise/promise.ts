@@ -41,5 +41,6 @@ class MyPromise {
         } catch (err) {
             reject(err)
         }
+        
     }
 }
