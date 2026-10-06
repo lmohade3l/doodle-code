@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CarModel } from "./types";
 
 const SEARCH_URL = '/api/models'
 
@@ -17,67 +18,44 @@ const useDebounce = (value: string, delay: number) => {
 	return debouncedValue
 }
 
-type CAR_ITEM = {
-	id: string,
-	label: string,
-	year: number,
-	model: string,
-	brand: string
-}
-
-interface CAR_ITEMS_RESPONSE {
-	items: CAR_ITEM[],
-	total: number,
-	message?: string
-}
+type State =
+	| { status: 'idle' }
+	| { status: 'loading' }
+	| { status: 'error', message: string }
+	| { status: 'success', items: CarModel[] }
 
 export function SearchFetch() {
 	const [query, setQuery] = useState('')
 	const debouncedQuery = useDebounce(query, 300)
-	const [items, setItems] = useState<CAR_ITEM[] | null>(null)
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState('')
-	const [refetchCount , setRefetchCount] = useState(0) 
-
-	const fetchData = (signal: AbortSignal) => {
-		setLoading(true)
-		setError('')
-		fetch(SEARCH_URL + `?q=${debouncedQuery}`, { signal: signal })
-			.then((res) => {
-				if (!res.ok) {
-					setError('خطایی رخ داد')
-					setItems(null)
-					return;
-				}
-				return res.json()
-			})
-			.then((res: CAR_ITEMS_RESPONSE) => {
-				if (res?.items && Array.isArray(res?.items)) {
-					setItems(res.items)
-				} else if (res?.message) {
-					setError(res?.message)
-					setItems(null)
-				}
-			}).catch((err) => {
-				if (err?.name === 'AbortError') return;
-				setError('خطایی رخ داد')
-				setItems(null)
-			}).finally(() => {
-				setLoading(false)
-			})
-	}
+	const [state, setState] = useState<State>({ status: 'idle' })
+	const [refetchCount, setRefetchCount] = useState(0)
 
 	useEffect(() => {
 		if (!debouncedQuery || debouncedQuery?.length < 2) {
-			setItems(null)
+			setState({ status: 'idle' })
 			return;
 		};
-		const controller = new AbortController()
 
-		fetchData(controller.signal)
+		setState({ status: 'loading' })
+		const controller = new AbortController()
+		const params = new URLSearchParams({ q: debouncedQuery })
+
+		fetch(SEARCH_URL + '?' + params, { signal: controller.signal })
+			.then((res) => {
+				if (!res.ok) {
+					throw new Error('HTTP Error' + res.status)
+				}
+				return res.json()
+			})
+			.then((data) => setState({ status: 'success', items: data.items }))
+			.catch((error) => {
+				if (controller.signal.aborted) return;
+				console.error(error)
+				setState({ status: 'error', message: error.message })
+			})
 
 		return () => controller.abort()
-	}, [debouncedQuery , refetchCount])
+	}, [debouncedQuery, refetchCount])
 
 	return (
 		<div>
@@ -89,12 +67,12 @@ export function SearchFetch() {
 			/>
 
 			{/* loading */}
-			{loading && (
+			{state.status === 'loading' && (
 				<p>در حال دریافت اطلاعات...</p>
 			)}
 
 			{/* error */}
-			{error && (
+			{state.status === 'error' && (
 				<div>
 					<p>خطایی رخ داد</p>
 					<button onClick={() => setRefetchCount((prev) => prev + 1)}>تلاش مجدد</button>
@@ -102,14 +80,14 @@ export function SearchFetch() {
 			)}
 
 			{/* empty state */}
-			{items && Array.isArray(items) && items?.length === 0 && !loading && (
+			{state.status === 'success' && state.items.length === 0 && (
 				<p>نتیجه ای یافت نشد</p>
 			)}
 
 			{/* response */}
-			{items && Array.isArray(items) && items?.length > 0 && (
+			{state.status === 'success' && state.items?.length > 0 && (
 				<>
-					<p>{'تعداد نتایج:' + items?.length}</p>
+					<p>{'تعداد نتایج:' + state.items?.length}</p>
 					<div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', width: '100%' }} >
 						<p>مدل</p>
 						<p>نام</p>
@@ -117,7 +95,7 @@ export function SearchFetch() {
 						<p>یرند</p>
 					</div>
 
-					{items?.map((item) => (
+					{state.items?.map((item) => (
 						<div key={item?.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', width: '100%' }} >
 							<p>{item?.model}</p>
 							<p>{item?.label}</p>
@@ -129,7 +107,9 @@ export function SearchFetch() {
 			)}
 
 			{/* idle */}
-			<p>مدل مورد نظر را وارد کنید</p>
+			{state.status === 'idle' && (
+				<p>مدل مورد نظر را وارد کنید</p>
+			)}
 		</div>
 	);
 }
