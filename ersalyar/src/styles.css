@@ -1,0 +1,137 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Tahoma, 'Segoe UI', sans-serif;
+  background: #f3f5f8;
+  color: #1c2430;
+}
+
+button, input, select { font: inherit; }
+
+button {
+  padding: 8px 14px;
+  border: 1px solid #c9d1dc;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primary { background: #0f7b6c; border-color: #0f7b6c; color: #fff; }
+button.danger { background: #c62828; border-color: #c62828; color: #fff; }
+
+.muted { color: #6b7686; font-size: 13px; }
+.error { color: #c62828; font-size: 13px; }
+.status { padding: 32px 0; text-align: center; color: #6b7686; }
+.code { font-family: Consolas, monospace; direction: ltr; unicode-bidi: isolate; }
+
+/* ---------- layout ---------- */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 24px;
+  background: #102a43;
+  color: #fff;
+}
+.header h1 { margin: 0; font-size: 20px; }
+.header nav { display: flex; gap: 16px; flex: 1; }
+.header a { color: #bcccdc; text-decoration: none; }
+.header a.active { color: #fff; font-weight: bold; }
+.in-transit { font-size: 13px; background: #243b53; padding: 4px 10px; border-radius: 999px; }
+
+.container { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+
+/* لایه‌ی جدا برای انیمیشن نرم‌تر ورود صفحه */
+.page {
+  padding: 16px 0 48px;
+  transform: translateZ(0);
+  animation: page-in 0.2s ease-out;
+}
+@keyframes page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.back { display: inline-block; margin-bottom: 12px; color: #0f7b6c; text-decoration: none; }
+
+/* ---------- list ---------- */
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border-radius: 999px; }
+.tab--active { background: #102a43; border-color: #102a43; color: #fff; }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.toolbar .field { margin-bottom: 0; }
+.field label { font-size: 13px; color: #47525f; }
+.field input, .field select {
+  padding: 9px 10px;
+  border: 1px solid #c9d1dc;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.table-wrap { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; }
+.shipments { width: 100%; border-collapse: collapse; }
+.shipments th, .shipments td {
+  padding: 12px;
+  text-align: start;
+  white-space: nowrap;
+  border-bottom: 1px solid #eef1f5;
+}
+.shipments th { background: #f0f3f8; font-size: 13px; }
+.shipments a { color: #0f7b6c; text-decoration: none; }
+
+.more { display: flex; justify-content: center; margin: 16px 0; }
+
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; }
+.badge--pending { background: #fff4ce; color: #7a5b00; }
+.badge--in_transit { background: #dbeafe; color: #1e40af; }
+.badge--delivered { background: #d1fae5; color: #065f46; }
+.badge--cancelled { background: #fee2e2; color: #991b1b; }
+
+/* ---------- detail ---------- */
+.card {
+  background: #fff;
+  border: 1px solid #dfe5ee;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; }
+.card h2, .card h3 { margin: 0 0 12px; }
+.details { display: grid; grid-template-columns: max-content 1fr; gap: 8px 24px; margin: 0; }
+.details dt { color: #6b7686; }
+.details dd { margin: 0; }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-inline-start: 3px solid #bcccdc;
+  margin-bottom: 8px;
+}
+
+/* ---------- form ---------- */
+.form { max-width: 520px; }
+.checkbox { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.total { margin: 16px 0; }
+.form-actions { display: flex; justify-content: flex-end; }
+
+/* ---------- modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(16, 42, 67, 0.55);
+}
+.modal { width: 100%; max-width: 420px; background: #fff; border-radius: 14px; padding: 20px; }
+.modal h2 { margin: 0 0 8px; font-size: 18px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
