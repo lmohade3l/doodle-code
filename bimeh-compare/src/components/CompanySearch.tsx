@@ -18,7 +18,10 @@ export function CompanySearch({ value, onSelect }: Props) {
       setSuggestions([]);
       return;
     }
-    fetchCompanies(debounced).then(setSuggestions);
+    const controller = new AbortController()
+    fetchCompanies(debounced , controller.signal).then(setSuggestions);
+
+    return () => controller.abort()
   }, [debounced]);
 
   return (

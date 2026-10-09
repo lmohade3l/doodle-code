@@ -38,7 +38,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
 .header a { color: #c7d2e5; text-decoration: none; }
 .header a.active { color: #fff; font-weight: bold; }
 
-.container { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+.container { max-width: 860px; margin: 0 auto; padding: 0 16px;  }
 .page { padding-top: 16px; }
 
 /* ---------- filters ---------- */
@@ -51,8 +51,8 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
   border-radius: 12px;
   padding: 16px;
 }
-.filters-row { display: flex; gap: 12px; }
-.filters-row > .field { flex: 0 0 240px; }
+.filters-row { display: flex; gap: 12px; align-items: flex-end; }
+.filters-row > .field { flex: 0 0 200px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .filters .field { margin-bottom: 0; }
@@ -62,6 +62,17 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
   border: 1px solid #c9d1dc;
   border-radius: 8px;
   background: #fff;
+}
+.remove-filters-button-container {
+  display: flex;
+  direction: column;
+  justify-content: end;
+  height: 100%;
+}
+.remove-filters-button {
+  width: 100px;
+  font-size: 12px;
+  height: 40px;
 }
 
 .company-search { position: relative; }
@@ -88,7 +99,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
 
 .card {
   position: relative;
-  z-index: 2;
+  /* z-index: 2; */
   display: flex;
   align-items: center;
   gap: 16px;
@@ -114,6 +125,9 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
 .pagination { display: flex; justify-content: center; gap: 6px; margin: 20px 0; }
 
 /* ---------- compare bar ---------- */
+.compare-bar-container {
+  margin-top: 100px;
+}
 .compare-bar {
   position: fixed;
   bottom: 0;

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateOrder } from '../hooks/useOrders';
-import { formatPrice } from '../utils/format';
+import { formatPrice, toEnglishDigits } from '../utils/format';
 import { isValidMobile, isValidNationalCode } from '../utils/validators';
 import type { Quote } from '../types';
 
@@ -16,7 +16,7 @@ type Errors = Partial<Record<'fullName' | 'nationalCode' | 'mobile', string>>;
 
 export function OrderForm({ quote, onClose }: Props) {
   const navigate = useNavigate();
-  const { mutate, isError } = useCreateOrder();
+  const { mutate, isError , isPending } = useCreateOrder();
 
   const [fullName, setFullName] = useState('');
   const [nationalCode, setNationalCode] = useState('');
@@ -31,13 +31,13 @@ export function OrderForm({ quote, onClose }: Props) {
 
     const nextErrors: Errors = {};
     if (fullName.trim().length < 3) nextErrors.fullName = 'نام و نام خانوادگی را کامل وارد کنید';
-    if (!isValidNationalCode(nationalCode)) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
+    if (!isValidNationalCode(toEnglishDigits(nationalCode))) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
     if (!isValidMobile(mobile)) nextErrors.mobile = 'شماره موبایل معتبر نیست';
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     mutate(
-      { quoteId: quote.id, fullName, nationalCode, mobile, extraCoverage },
+      { quoteId: quote.id, fullName, nationalCode: toEnglishDigits(nationalCode), mobile, extraCoverage },
       {
         onSuccess: () => {
           onClose();
@@ -67,7 +67,8 @@ export function OrderForm({ quote, onClose }: Props) {
             id="nationalCode"
             inputMode="numeric"
             value={nationalCode}
-            onChange={(e) => setNationalCode(e.target.value)}
+            onChange={(e) => setNationalCode((e.target.value))}
+            maxLength={10}
           />
           {errors.nationalCode && <span className="error">{errors.nationalCode}</span>}
         </div>
@@ -102,7 +103,7 @@ export function OrderForm({ quote, onClose }: Props) {
           <button type="button" onClick={onClose}>
             انصراف
           </button>
-          <button type="submit" className="primary">
+          <button disabled={isPending} type="submit" className="primary">
             ثبت سفارش
           </button>
         </div>

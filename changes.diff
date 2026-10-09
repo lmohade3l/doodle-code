@@ -1,0 +1,439 @@
+diff --git a/bimeh-compare/REPORT.md b/bimeh-compare/REPORT.md
+index 2959c5d..b88a251 100644
+--- a/bimeh-compare/REPORT.md
++++ b/bimeh-compare/REPORT.md
+@@ -1,13 +1,18 @@
+ # گزارش
+ 
+ ## ترتیبی که انتخاب کردم و چرا
+-<!-- دو سه جمله -->
+-
++تیکت ها رو ۳ دسته کردم: ضروری ها - اولویت متوسط - اولویت پایین
++ضروری ها: ۱۱۰ - ۱۱۲ -۱۱۵ -۱۱۴- ۱۱۷
++متوسط ها:- - ۱۱۸- ۱۱۹ -۱۲۱- ۱۱۱ - ۱۱۳ - ۱۱۶
++پایین ها: ۱۲۰ -۱۲۲- ۱۲۳-۱۲۴
+ ## تیکت‌های حل‌شده
++همه به جز:
++۱۱۶ ۱۱۸ ۱۲۰ اخری هم نصفه است
+ 
+ | تیکت | علت (یک جمله) | فایل | چطور تست کردم |
+ |---|---|---|---|
+-| BIM-___ | | | |
++| BIM-۱۰۱ | تایپ بیمه توی کلیدهای ری اکت کوئری نبود| useQuotes.ts | نوع بیمه رو عوض کردم و تب نت ورک رو چک کردم|
++| ۱۰۲ | جمع رو با مقادیر استرینگ انجام میداد به خاطر همین عددها صرفا کنارهم مینشستن و جمع نمیشدند |‌ 
+ 
+ ## تیکت‌هایی که شروع کردم ولی تموم نشد
+ <!-- تا کجا رسیدم، فرضیه‌م چیه، قدم بعدی چی بود -->
+diff --git a/bimeh-compare/src/api/quotes.ts b/bimeh-compare/src/api/quotes.ts
+index 2bd4a0c..7cd3a12 100644
+--- a/bimeh-compare/src/api/quotes.ts
++++ b/bimeh-compare/src/api/quotes.ts
+@@ -13,7 +13,7 @@ export async function fetchQuotes(params: QuotesParams) {
+   return data as QuotesResponse;
+ }
+ 
+-export async function fetchCompanies(q: string) {
+-  const { data } = await client.get('/companies', { params: { q } });
++export async function fetchCompanies(q: string , signal: AbortSignal) {
++  const { data } = await client.get('/companies', { params: { q } , signal: signal });
+   return data as string[];
+ }
+diff --git a/bimeh-compare/src/components/CompanySearch.tsx b/bimeh-compare/src/components/CompanySearch.tsx
+index eb457a6..c9405cd 100644
+--- a/bimeh-compare/src/components/CompanySearch.tsx
++++ b/bimeh-compare/src/components/CompanySearch.tsx
+@@ -18,7 +18,10 @@ export function CompanySearch({ value, onSelect }: Props) {
+       setSuggestions([]);
+       return;
+     }
+-    fetchCompanies(debounced).then(setSuggestions);
++    const controller = new AbortController()
++    fetchCompanies(debounced , controller.signal).then(setSuggestions);
++
++    return () => controller.abort()
+   }, [debounced]);
+ 
+   return (
+diff --git a/bimeh-compare/src/components/CompareBar.tsx b/bimeh-compare/src/components/CompareBar.tsx
+index dd381c6..1ebec34 100644
+--- a/bimeh-compare/src/components/CompareBar.tsx
++++ b/bimeh-compare/src/components/CompareBar.tsx
+@@ -1,30 +1,32 @@
+ import { useCompare } from '../context/CompareContext';
+-import { formatPrice } from '../utils/format';
++import { formatPrice, toEnglishDigits } from '../utils/format';
+ 
+ export function CompareBar() {
+   const { items, remove, clear } = useCompare();
+   if (items.length === 0) return null;
+ 
+-  const total = items.reduce((sum, q) => sum + q.price, 0);
++  const total = items.reduce((sum, q) => sum + Number(toEnglishDigits(q.price.toString())), 0);
+ 
+   return (
+-    <aside className="compare-bar">
+-      <div className="compare-items">
+-        {items.map((q) => (
+-          <span key={q.id} className="chip">
+-            {q.company} ({q.plan})
+-            <button aria-label={`حذف ${q.company}`} onClick={() => remove(q.id)}>
+-              ×
+-            </button>
++    <div className='compare-bar-container'>
++      <aside className="compare-bar">
++        <div className="compare-items">
++          {items.map((q) => (
++            <span key={q.id} className="chip">
++              {q.company} ({q.plan})
++              <button aria-label={`حذف ${q.company}`} onClick={() => remove(q.id)}>
++                ×
++              </button>
++            </span>
++          ))}
++        </div>
++        <div className="compare-summary">
++          <span>
++            {items.length.toLocaleString('fa-IR')} مورد · جمع: <strong>{formatPrice(total)}</strong>
+           </span>
+-        ))}
+-      </div>
+-      <div className="compare-summary">
+-        <span>
+-          {items.length.toLocaleString('fa-IR')} مورد · جمع: <strong>{formatPrice(total)}</strong>
+-        </span>
+-        <button onClick={clear}>پاک کردن</button>
+-      </div>
+-    </aside>
++          <button onClick={clear}>پاک کردن</button>
++        </div>
++      </aside>
++    </div>
+   );
+ }
+diff --git a/bimeh-compare/src/components/Filters.tsx b/bimeh-compare/src/components/Filters.tsx
+index 2579e69..fc3e523 100644
+--- a/bimeh-compare/src/components/Filters.tsx
++++ b/bimeh-compare/src/components/Filters.tsx
+@@ -8,9 +8,11 @@ type Props = {
+   onTypeChange: (type: InsuranceType) => void;
+   onSortChange: (sort: SortOrder) => void;
+   onCompanyChange: (company: string) => void;
++  resetFilters: () => void
+ };
+ 
+-export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange }: Props) {
++export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange , resetFilters}: Props) {
++
+   return (
+     <section className="filters">
+       <div className="filters-row">
+@@ -37,6 +39,10 @@ export function Filters({ type, sort, company, onTypeChange, onSortChange, onCom
+         </div>
+ 
+         <CompanySearch value={company} onSelect={onCompanyChange} />
++
++        <div className='remove-filters-button-container'>
++          <button onClick={resetFilters} className='remove-filters-button '>حذف فیلترها</button>
++        </div>
+       </div>
+     </section>
+   );
+diff --git a/bimeh-compare/src/components/OrderForm.tsx b/bimeh-compare/src/components/OrderForm.tsx
+index a27037f..45d930a 100644
+--- a/bimeh-compare/src/components/OrderForm.tsx
++++ b/bimeh-compare/src/components/OrderForm.tsx
+@@ -1,7 +1,7 @@
+ import { useState, type FormEvent } from 'react';
+ import { useNavigate } from 'react-router-dom';
+ import { useCreateOrder } from '../hooks/useOrders';
+-import { formatPrice } from '../utils/format';
++import { formatPrice, toEnglishDigits } from '../utils/format';
+ import { isValidMobile, isValidNationalCode } from '../utils/validators';
+ import type { Quote } from '../types';
+ 
+@@ -31,13 +31,13 @@ export function OrderForm({ quote, onClose }: Props) {
+ 
+     const nextErrors: Errors = {};
+     if (fullName.trim().length < 3) nextErrors.fullName = 'نام و نام خانوادگی را کامل وارد کنید';
+-    if (!isValidNationalCode(nationalCode)) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
++    if (!isValidNationalCode(toEnglishDigits(nationalCode))) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
+     if (!isValidMobile(mobile)) nextErrors.mobile = 'شماره موبایل معتبر نیست';
+     setErrors(nextErrors);
+     if (Object.keys(nextErrors).length > 0) return;
+ 
+     mutate(
+-      { quoteId: quote.id, fullName, nationalCode, mobile, extraCoverage },
++      { quoteId: quote.id, fullName, nationalCode: toEnglishDigits(nationalCode), mobile, extraCoverage },
+       {
+         onSuccess: () => {
+           onClose();
+@@ -67,7 +67,8 @@ export function OrderForm({ quote, onClose }: Props) {
+             id="nationalCode"
+             inputMode="numeric"
+             value={nationalCode}
+-            onChange={(e) => setNationalCode(e.target.value)}
++            onChange={(e) => setNationalCode((e.target.value))}
++            maxLength={10}
+           />
+           {errors.nationalCode && <span className="error">{errors.nationalCode}</span>}
+         </div>
+diff --git a/bimeh-compare/src/components/QuoteCard.tsx b/bimeh-compare/src/components/QuoteCard.tsx
+index 306bfce..c1de075 100644
+--- a/bimeh-compare/src/components/QuoteCard.tsx
++++ b/bimeh-compare/src/components/QuoteCard.tsx
+@@ -6,9 +6,10 @@ type Props = {
+   quote: Quote;
+   isCheapest: boolean;
+   onBuy: (quote: Quote) => void;
++  disableCompare: boolean
+ };
+ 
+-export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
++export function QuoteCard({ quote, isCheapest, onBuy, disableCompare }: Props) {
+   const compare = useCompare();
+   const inCompare = compare.has(quote.id);
+ 
+@@ -23,7 +24,14 @@ export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
+       </div>
+       <span className="price">{formatPrice(quote.price)}</span>
+       <div className="card-actions">
+-        <button onClick={() => compare.toggle(quote)}>
++        <button onClick={() => {
++          if (!inCompare && disableCompare) {
++            alert('تنها ۳ ایتم برای مقایسه میتوانید انتخاب کنید')
++            return
++          } else {
++            compare.toggle(quote)
++          }
++        }}>
+           {inCompare ? 'حذف از مقایسه' : 'مقایسه'}
+         </button>
+         <button className="primary" onClick={() => onBuy(quote)}>
+diff --git a/bimeh-compare/src/hooks/useCompanies.ts b/bimeh-compare/src/hooks/useCompanies.ts
+new file mode 100644
+index 0000000..4029f1c
+--- /dev/null
++++ b/bimeh-compare/src/hooks/useCompanies.ts
+@@ -0,0 +1,8 @@
++import { useQuery } from "@tanstack/react-query";
++
++export function useCompanies({q} : {q: string}) {
++        return useQuery({
++                queryKey: ['companies' , q],
++                queryFn: () => {}
++        })
++}
+\ No newline at end of file
+diff --git a/bimeh-compare/src/hooks/useCountdown.ts b/bimeh-compare/src/hooks/useCountdown.ts
+index 10e209f..04f1a5f 100644
+--- a/bimeh-compare/src/hooks/useCountdown.ts
++++ b/bimeh-compare/src/hooks/useCountdown.ts
+@@ -6,7 +6,7 @@ export function useCountdown(initial: number, onExpire: () => void) {
+ 
+   useEffect(() => {
+     const id = setInterval(() => {
+-      if (seconds > 0) setSeconds(seconds - 1);
++      if (seconds > 0) setSeconds((prev) => prev -1);
+     }, 1000);
+     return () => clearInterval(id);
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+diff --git a/bimeh-compare/src/hooks/useOrders.ts b/bimeh-compare/src/hooks/useOrders.ts
+index 35797e0..9336990 100644
+--- a/bimeh-compare/src/hooks/useOrders.ts
++++ b/bimeh-compare/src/hooks/useOrders.ts
+@@ -5,7 +5,7 @@ export function useOrders() {
+   return useQuery({
+     queryKey: ['orders'],
+     queryFn: fetchOrders,
+-    staleTime: 60_000,
++    gcTime: 60_000,
+   });
+ }
+ 
+diff --git a/bimeh-compare/src/hooks/useQuotes.ts b/bimeh-compare/src/hooks/useQuotes.ts
+index de957e5..3241689 100644
+--- a/bimeh-compare/src/hooks/useQuotes.ts
++++ b/bimeh-compare/src/hooks/useQuotes.ts
+@@ -12,7 +12,7 @@ type Params = {
+ 
+ export function useQuotes({ type, page, company }: Params) {
+   return useQuery({
+-    queryKey: ['quotes', page, company],
++    queryKey: ['quotes', page, company , type],
+     queryFn: () => fetchQuotes({ type, page, pageSize: PAGE_SIZE, company }),
+     staleTime: 30_000,
+   });
+diff --git a/bimeh-compare/src/pages/QuotesPage.tsx b/bimeh-compare/src/pages/QuotesPage.tsx
+index de72e72..de493be 100644
+--- a/bimeh-compare/src/pages/QuotesPage.tsx
++++ b/bimeh-compare/src/pages/QuotesPage.tsx
+@@ -1,4 +1,4 @@
+-import { useState } from 'react';
++import { useMemo, useState } from 'react';
+ import { Filters } from '../components/Filters';
+ import { OrderForm } from '../components/OrderForm';
+ import { Pagination } from '../components/Pagination';
+@@ -6,6 +6,7 @@ import { PriceTimer } from '../components/PriceTimer';
+ import { QuoteCard } from '../components/QuoteCard';
+ import { PAGE_SIZE, useQuotes } from '../hooks/useQuotes';
+ import type { InsuranceType, Quote, SortOrder } from '../types';
++import { useCompare } from '../context/CompareContext';
+ 
+ export function QuotesPage() {
+   const [type, setType] = useState<InsuranceType>('third-party');
+@@ -14,13 +15,26 @@ export function QuotesPage() {
+   const [page, setPage] = useState(1);
+   const [buying, setBuying] = useState<Quote | null>(null);
+ 
+-  const { data, isLoading } = useQuotes({ type, page, company });
++  const resetFilters = () => {
++    setType('third-party')
++    setSort('default')
++    setCompany('')
++  }
+ 
+-  const items = data?.items ?? [];
+-  if (sort === 'price-asc') items.sort((a, b) => a.price - b.price);
+-  if (sort === 'price-desc') items.sort((a, b) => b.price - a.price);
++  const { data, isLoading, error } = useQuotes({ type, page, company });
+ 
+-  const cheapest = items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
++  const { items: comparedItems} = useCompare();
++
++  const items = useMemo(() => {
++    return data?.items ? (sort === 'price-asc' ? data?.items.sort((a, b) => a.price - b.price) :
++      sort === 'price-desc' ? data?.items.sort((a, b) => b.price - a.price) :
++        sort === 'default' ? data?.items :
++          []) : []
++  }, [sort, data])
++
++  // console.log({sort} , {items})
++
++  const cheapest = items && items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
+ 
+   return (
+     <div className="page">
+@@ -28,9 +42,13 @@ export function QuotesPage() {
+         type={type}
+         sort={sort}
+         company={company}
+-        onTypeChange={setType}
++        onTypeChange={(type) => {
++          setType(type)
++          setPage(1)
++        }}
+         onSortChange={setSort}
+         onCompanyChange={setCompany}
++        resetFilters={resetFilters}
+       />
+ 
+       <PriceTimer />
+@@ -47,6 +65,7 @@ export function QuotesPage() {
+               quote={quote}
+               isCheapest={quote.price === cheapest}
+               onBuy={setBuying}
++              disableCompare={comparedItems?.length > 2}
+             />
+           ))}
+         </ul>
+@@ -55,6 +74,11 @@ export function QuotesPage() {
+       {data && <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} onChange={setPage} />}
+ 
+       {buying && <OrderForm quote={buying} onClose={() => setBuying(null)} />}
++
++      {error && (
++        <p>{error?.response?.data?.message || 'خطایی رخ داد'}</p>
++
++      )}
+     </div>
+   );
+ }
+diff --git a/bimeh-compare/src/styles.css b/bimeh-compare/src/styles.css
+index cfb3ade..41d6209 100644
+--- a/bimeh-compare/src/styles.css
++++ b/bimeh-compare/src/styles.css
+@@ -38,7 +38,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
+ .header a { color: #c7d2e5; text-decoration: none; }
+ .header a.active { color: #fff; font-weight: bold; }
+ 
+-.container { max-width: 860px; margin: 0 auto; padding: 0 16px; }
++.container { max-width: 860px; margin: 0 auto; padding: 0 16px;  }
+ .page { padding-top: 16px; }
+ 
+ /* ---------- filters ---------- */
+@@ -51,8 +51,8 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
+   border-radius: 12px;
+   padding: 16px;
+ }
+-.filters-row { display: flex; gap: 12px; }
+-.filters-row > .field { flex: 0 0 240px; }
++.filters-row { display: flex; gap: 12px; align-items: flex-end; }
++.filters-row > .field { flex: 0 0 200px; }
+ 
+ .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+ .filters .field { margin-bottom: 0; }
+@@ -63,6 +63,17 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
+   border-radius: 8px;
+   background: #fff;
+ }
++.remove-filters-button-container {
++  display: flex;
++  direction: column;
++  justify-content: end;
++  height: 100%;
++}
++.remove-filters-button {
++  width: 100px;
++  font-size: 12px;
++  height: 40px;
++}
+ 
+ .company-search { position: relative; }
+ .suggestions {
+@@ -88,7 +99,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
+ 
+ .card {
+   position: relative;
+-  z-index: 2;
++  /* z-index: 2; */
+   display: flex;
+   align-items: center;
+   gap: 16px;
+@@ -114,6 +125,9 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
+ .pagination { display: flex; justify-content: center; gap: 6px; margin: 20px 0; }
+ 
+ /* ---------- compare bar ---------- */
++.compare-bar-container {
++  margin-top: 100px;
++}
+ .compare-bar {
+   position: fixed;
+   bottom: 0;
+diff --git a/bimeh-compare/src/utils/format.ts b/bimeh-compare/src/utils/format.ts
+index 14eeb64..36af194 100644
+--- a/bimeh-compare/src/utils/format.ts
++++ b/bimeh-compare/src/utils/format.ts
+@@ -5,3 +5,10 @@ export function formatPrice(value: number) {
+ export function formatDate(iso: string) {
+   return new Date(iso).toLocaleDateString('fa-IR');
+ }
++
++export function toEnglishDigits(value: string) {
++  return value
++    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
++    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
++
++}
+diff --git a/bimeh-compare/src/utils/validators.ts b/bimeh-compare/src/utils/validators.ts
+index 7ca17f2..6aee922 100644
+--- a/bimeh-compare/src/utils/validators.ts
++++ b/bimeh-compare/src/utils/validators.ts
+@@ -1,7 +1,7 @@
+ export function isValidNationalCode(value: string): boolean {
+   const n = Number(value);
+   if (Number.isNaN(n)) return false;
+-  return String(n).length === 10;
++  return value.length === 10;
+ }
+ 
+ export function isValidMobile(value: string): boolean {

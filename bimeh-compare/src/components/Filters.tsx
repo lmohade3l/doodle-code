@@ -8,9 +8,11 @@ type Props = {
   onTypeChange: (type: InsuranceType) => void;
   onSortChange: (sort: SortOrder) => void;
   onCompanyChange: (company: string) => void;
+  resetFilters: () => void
 };
 
-export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange }: Props) {
+export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange , resetFilters}: Props) {
+
   return (
     <section className="filters">
       <div className="filters-row">
@@ -37,6 +39,10 @@ export function Filters({ type, sort, company, onTypeChange, onSortChange, onCom
         </div>
 
         <CompanySearch value={company} onSelect={onCompanyChange} />
+
+        <div className='remove-filters-button-container'>
+          <button onClick={resetFilters} className='remove-filters-button '>حذف فیلترها</button>
+        </div>
       </div>
     </section>
   );

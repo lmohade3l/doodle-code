@@ -13,7 +13,7 @@ export async function fetchQuotes(params: QuotesParams) {
   return data as QuotesResponse;
 }
 
-export async function fetchCompanies(q: string) {
-  const { data } = await client.get('/companies', { params: { q } });
+export async function fetchCompanies(q: string , signal: AbortSignal) {
+  const { data } = await client.get('/companies', { params: { q } , signal: signal });
   return data as string[];
 }

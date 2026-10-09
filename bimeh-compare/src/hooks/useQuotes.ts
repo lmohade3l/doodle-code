@@ -12,7 +12,7 @@ type Params = {
 
 export function useQuotes({ type, page, company }: Params) {
   return useQuery({
-    queryKey: ['quotes', page, company],
+    queryKey: ['quotes', page, company , type],
     queryFn: () => fetchQuotes({ type, page, pageSize: PAGE_SIZE, company }),
     staleTime: 30_000,
   });

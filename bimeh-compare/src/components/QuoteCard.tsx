@@ -6,9 +6,10 @@ type Props = {
   quote: Quote;
   isCheapest: boolean;
   onBuy: (quote: Quote) => void;
+  disableCompare: boolean
 };
 
-export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
+export function QuoteCard({ quote, isCheapest, onBuy, disableCompare }: Props) {
   const compare = useCompare();
   const inCompare = compare.has(quote.id);
 
@@ -23,7 +24,14 @@ export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
       </div>
       <span className="price">{formatPrice(quote.price)}</span>
       <div className="card-actions">
-        <button onClick={() => compare.toggle(quote)}>
+        <button onClick={() => {
+          if (!inCompare && disableCompare) {
+            alert('تنها ۳ ایتم برای مقایسه میتوانید انتخاب کنید')
+            return
+          } else {
+            compare.toggle(quote)
+          }
+        }}>
           {inCompare ? 'حذف از مقایسه' : 'مقایسه'}
         </button>
         <button className="primary" onClick={() => onBuy(quote)}>

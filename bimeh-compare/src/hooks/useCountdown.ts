@@ -6,7 +6,7 @@ export function useCountdown(initial: number, onExpire: () => void) {
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (seconds > 0) setSeconds(seconds - 1);
+      if (seconds > 0) setSeconds((prev) => prev -1);
     }, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps

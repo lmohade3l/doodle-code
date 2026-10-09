@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Filters } from '../components/Filters';
 import { OrderForm } from '../components/OrderForm';
 import { Pagination } from '../components/Pagination';
@@ -6,6 +6,7 @@ import { PriceTimer } from '../components/PriceTimer';
 import { QuoteCard } from '../components/QuoteCard';
 import { PAGE_SIZE, useQuotes } from '../hooks/useQuotes';
 import type { InsuranceType, Quote, SortOrder } from '../types';
+import { useCompare } from '../context/CompareContext';
 
 export function QuotesPage() {
   const [type, setType] = useState<InsuranceType>('third-party');
@@ -14,13 +15,26 @@ export function QuotesPage() {
   const [page, setPage] = useState(1);
   const [buying, setBuying] = useState<Quote | null>(null);
 
-  const { data, isLoading } = useQuotes({ type, page, company });
+  const resetFilters = () => {
+    setType('third-party')
+    setSort('default')
+    setCompany('')
+  }
 
-  const items = data?.items ?? [];
-  if (sort === 'price-asc') items.sort((a, b) => a.price - b.price);
-  if (sort === 'price-desc') items.sort((a, b) => b.price - a.price);
+  const { data, isLoading, error } = useQuotes({ type, page, company });
 
-  const cheapest = items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
+  const { items: comparedItems} = useCompare();
+
+  const items = useMemo(() => {
+    return data?.items ? (sort === 'price-asc' ? data?.items.sort((a, b) => a.price - b.price) :
+      sort === 'price-desc' ? data?.items.sort((a, b) => b.price - a.price) :
+        sort === 'default' ? data?.items :
+          []) : []
+  }, [sort, data])
+
+  // console.log({sort} , {items})
+
+  const cheapest = items && items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
 
   return (
     <div className="page">
@@ -28,9 +42,13 @@ export function QuotesPage() {
         type={type}
         sort={sort}
         company={company}
-        onTypeChange={setType}
+        onTypeChange={(type) => {
+          setType(type)
+          setPage(1)
+        }}
         onSortChange={setSort}
         onCompanyChange={setCompany}
+        resetFilters={resetFilters}
       />
 
       <PriceTimer />
@@ -47,6 +65,7 @@ export function QuotesPage() {
               quote={quote}
               isCheapest={quote.price === cheapest}
               onBuy={setBuying}
+              disableCompare={comparedItems?.length > 2}
             />
           ))}
         </ul>
@@ -55,6 +74,11 @@ export function QuotesPage() {
       {data && <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} onChange={setPage} />}
 
       {buying && <OrderForm quote={buying} onClose={() => setBuying(null)} />}
+
+      {error && (
+        <p>{error?.response?.data?.message || 'خطایی رخ داد'}</p>
+
+      )}
     </div>
   );
 }

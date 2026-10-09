@@ -5,7 +5,7 @@ export function useOrders() {
   return useQuery({
     queryKey: ['orders'],
     queryFn: fetchOrders,
-    staleTime: 60_000,
+    gcTime: 60_000,
   });
 }
 
@@ -15,7 +15,7 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: createOrder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['order'] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 }
