@@ -1,439 +1,482 @@
-diff --git a/bimeh-compare/REPORT.md b/bimeh-compare/REPORT.md
-index 2959c5d..b88a251 100644
---- a/bimeh-compare/REPORT.md
-+++ b/bimeh-compare/REPORT.md
-@@ -1,13 +1,18 @@
- # گزارش
+diff --git a/ersalyar/REPORT.md b/ersalyar/REPORT.md
+index 2097c2a..5e10c69 100644
+--- a/ersalyar/REPORT.md
++++ b/ersalyar/REPORT.md
+@@ -3,14 +3,45 @@
+ ## فرضیه‌های اولیه (قبل از دیدن کد)
+ | تیکت | فرضیه‌ی یک‌خطی |
+ |---|---|
+-| ERS-201 | |
++| 201 | we are sending the wrong amount to backend? |
++| 202 | the cencel functionality should not exist in this status + if it did refetch the data |
++| 203 | refetch the detail data on entering the page + maybe it has stale time |
++| 204 | ? i should check the code for this |
++| 205 | the validation checks for number whereas the weight is an string |
++| 206 | ? i should check the code for this |
++| 207 | the amount calculation should depend on all- weight and city |
++| 208 | the paste functionality does not work + maybe the type is wrong(string/number) |
++| 209 | refetchInterval? |
++| 210 | the filter does not work correctly |
++| 211 | refetch the data on cancel or submit |
++| 212 | width is fixed |
++| 213 |  |
++| 214 |  |
++| 215 |  |
  
- ## ترتیبی که انتخاب کردم و چرا
--<!-- دو سه جمله -->
--
-+تیکت ها رو ۳ دسته کردم: ضروری ها - اولویت متوسط - اولویت پایین
-+ضروری ها: ۱۱۰ - ۱۱۲ -۱۱۵ -۱۱۴- ۱۱۷
-+متوسط ها:- - ۱۱۸- ۱۱۹ -۱۲۱- ۱۱۱ - ۱۱۳ - ۱۱۶
-+پایین ها: ۱۲۰ -۱۲۲- ۱۲۳-۱۲۴
+ ## ترتیب و دلیلش
++urgent: 201 , 205 , 202 , 206 , 203
++medium: 207 , 211 , 204 , 209 
++low: 208 , 210 , 213 , 214 , 215 , 212
+ 
  ## تیکت‌های حل‌شده
-+همه به جز:
-+۱۱۶ ۱۱۸ ۱۲۰ اخری هم نصفه است
- 
  | تیکت | علت (یک جمله) | فایل | چطور تست کردم |
  |---|---|---|---|
--| BIM-___ | | | |
-+| BIM-۱۰۱ | تایپ بیمه توی کلیدهای ری اکت کوئری نبود| useQuotes.ts | نوع بیمه رو عوض کردم و تب نت ورک رو چک کردم|
-+| ۱۰۲ | جمع رو با مقادیر استرینگ انجام میداد به خاطر همین عددها صرفا کنارهم مینشستن و جمع نمیشدند |‌ 
+-| ERS-___ | | | |
++| 201 | the lable was wrongly 'toman' | format.ts | |
++| 202 | removed the cancel button for DELIVERED status + for statuses that is DOES make sense we should not use optimistic result display and just invalidate the query |
++| 203 | removed the stale time + use isFetching along with isLoading cause when there's a cache this one gets triggered also used refetchInterval instead of setInterval for freshing the data | ShipmentDetailPage + useShipment | 
++| 204 | the getNextPageParam in useShipment was wrong, changed it to lastPage.page + 1 |
++| 205 | the type in the form was string | NewShipmentPage | {...register('weightKg', { valueAsNumber: true })} - it did not give error on entering a weight
++| 206 | the zod validation was checking with NaN when it was not entered, removed value as number and add a preprocess to zod, also added optional() |
++| 207 | city was not in the dependencies, added it and it |
++| 208 |  |
++| 209 | it was because of the setInterval? |
++| 210 | the value for the tab to go in status was wrong changed to DELIVERED |
++| 211 | stats fetch had infinity stale time, i made it 10 mins and invalidated the query on mutations |
++| 212 | overflow-x: auto |
++| 213 |  |
++| 214 |  |
++| 215 |  |
  
- ## تیکت‌هایی که شروع کردم ولی تموم نشد
- <!-- تا کجا رسیدم، فرضیه‌م چیه، قدم بعدی چی بود -->
-diff --git a/bimeh-compare/src/api/quotes.ts b/bimeh-compare/src/api/quotes.ts
-index 2bd4a0c..7cd3a12 100644
---- a/bimeh-compare/src/api/quotes.ts
-+++ b/bimeh-compare/src/api/quotes.ts
-@@ -13,7 +13,7 @@ export async function fetchQuotes(params: QuotesParams) {
-   return data as QuotesResponse;
- }
+ ## نیمه‌کاره (تا کجا رسیدم، قدم بعدی)
  
--export async function fetchCompanies(q: string) {
--  const { data } = await client.get('/companies', { params: { q } });
-+export async function fetchCompanies(q: string , signal: AbortSignal) {
-+  const { data } = await client.get('/companies', { params: { q } , signal: signal });
-   return data as string[];
- }
-diff --git a/bimeh-compare/src/components/CompanySearch.tsx b/bimeh-compare/src/components/CompanySearch.tsx
-index eb457a6..c9405cd 100644
---- a/bimeh-compare/src/components/CompanySearch.tsx
-+++ b/bimeh-compare/src/components/CompanySearch.tsx
-@@ -18,7 +18,10 @@ export function CompanySearch({ value, onSelect }: Props) {
-       setSuggestions([]);
-       return;
-     }
--    fetchCompanies(debounced).then(setSuggestions);
-+    const controller = new AbortController()
-+    fetchCompanies(debounced , controller.signal).then(setSuggestions);
-+
-+    return () => controller.abort()
-   }, [debounced]);
- 
-   return (
-diff --git a/bimeh-compare/src/components/CompareBar.tsx b/bimeh-compare/src/components/CompareBar.tsx
-index dd381c6..1ebec34 100644
---- a/bimeh-compare/src/components/CompareBar.tsx
-+++ b/bimeh-compare/src/components/CompareBar.tsx
-@@ -1,30 +1,32 @@
- import { useCompare } from '../context/CompareContext';
--import { formatPrice } from '../utils/format';
-+import { formatPrice, toEnglishDigits } from '../utils/format';
- 
- export function CompareBar() {
-   const { items, remove, clear } = useCompare();
-   if (items.length === 0) return null;
- 
--  const total = items.reduce((sum, q) => sum + q.price, 0);
-+  const total = items.reduce((sum, q) => sum + Number(toEnglishDigits(q.price.toString())), 0);
- 
-   return (
--    <aside className="compare-bar">
--      <div className="compare-items">
--        {items.map((q) => (
--          <span key={q.id} className="chip">
--            {q.company} ({q.plan})
--            <button aria-label={`حذف ${q.company}`} onClick={() => remove(q.id)}>
--              ×
--            </button>
-+    <div className='compare-bar-container'>
-+      <aside className="compare-bar">
-+        <div className="compare-items">
-+          {items.map((q) => (
-+            <span key={q.id} className="chip">
-+              {q.company} ({q.plan})
-+              <button aria-label={`حذف ${q.company}`} onClick={() => remove(q.id)}>
-+                ×
-+              </button>
-+            </span>
-+          ))}
-+        </div>
-+        <div className="compare-summary">
-+          <span>
-+            {items.length.toLocaleString('fa-IR')} مورد · جمع: <strong>{formatPrice(total)}</strong>
-           </span>
--        ))}
--      </div>
--      <div className="compare-summary">
--        <span>
--          {items.length.toLocaleString('fa-IR')} مورد · جمع: <strong>{formatPrice(total)}</strong>
--        </span>
--        <button onClick={clear}>پاک کردن</button>
--      </div>
--    </aside>
-+          <button onClick={clear}>پاک کردن</button>
-+        </div>
-+      </aside>
-+    </div>
-   );
- }
-diff --git a/bimeh-compare/src/components/Filters.tsx b/bimeh-compare/src/components/Filters.tsx
-index 2579e69..fc3e523 100644
---- a/bimeh-compare/src/components/Filters.tsx
-+++ b/bimeh-compare/src/components/Filters.tsx
-@@ -8,9 +8,11 @@ type Props = {
-   onTypeChange: (type: InsuranceType) => void;
-   onSortChange: (sort: SortOrder) => void;
-   onCompanyChange: (company: string) => void;
-+  resetFilters: () => void
- };
- 
--export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange }: Props) {
-+export function Filters({ type, sort, company, onTypeChange, onSortChange, onCompanyChange , resetFilters}: Props) {
-+
-   return (
-     <section className="filters">
-       <div className="filters-row">
-@@ -37,6 +39,10 @@ export function Filters({ type, sort, company, onTypeChange, onSortChange, onCom
-         </div>
- 
-         <CompanySearch value={company} onSelect={onCompanyChange} />
-+
-+        <div className='remove-filters-button-container'>
-+          <button onClick={resetFilters} className='remove-filters-button '>حذف فیلترها</button>
-+        </div>
-       </div>
-     </section>
-   );
-diff --git a/bimeh-compare/src/components/OrderForm.tsx b/bimeh-compare/src/components/OrderForm.tsx
-index a27037f..45d930a 100644
---- a/bimeh-compare/src/components/OrderForm.tsx
-+++ b/bimeh-compare/src/components/OrderForm.tsx
-@@ -1,7 +1,7 @@
- import { useState, type FormEvent } from 'react';
- import { useNavigate } from 'react-router-dom';
- import { useCreateOrder } from '../hooks/useOrders';
--import { formatPrice } from '../utils/format';
-+import { formatPrice, toEnglishDigits } from '../utils/format';
- import { isValidMobile, isValidNationalCode } from '../utils/validators';
- import type { Quote } from '../types';
- 
-@@ -31,13 +31,13 @@ export function OrderForm({ quote, onClose }: Props) {
- 
-     const nextErrors: Errors = {};
-     if (fullName.trim().length < 3) nextErrors.fullName = 'نام و نام خانوادگی را کامل وارد کنید';
--    if (!isValidNationalCode(nationalCode)) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
-+    if (!isValidNationalCode(toEnglishDigits(nationalCode))) nextErrors.nationalCode = 'کد ملی باید ۱۰ رقم باشد';
-     if (!isValidMobile(mobile)) nextErrors.mobile = 'شماره موبایل معتبر نیست';
-     setErrors(nextErrors);
-     if (Object.keys(nextErrors).length > 0) return;
- 
-     mutate(
--      { quoteId: quote.id, fullName, nationalCode, mobile, extraCoverage },
-+      { quoteId: quote.id, fullName, nationalCode: toEnglishDigits(nationalCode), mobile, extraCoverage },
-       {
-         onSuccess: () => {
-           onClose();
-@@ -67,7 +67,8 @@ export function OrderForm({ quote, onClose }: Props) {
-             id="nationalCode"
-             inputMode="numeric"
-             value={nationalCode}
--            onChange={(e) => setNationalCode(e.target.value)}
-+            onChange={(e) => setNationalCode((e.target.value))}
-+            maxLength={10}
-           />
-           {errors.nationalCode && <span className="error">{errors.nationalCode}</span>}
-         </div>
-diff --git a/bimeh-compare/src/components/QuoteCard.tsx b/bimeh-compare/src/components/QuoteCard.tsx
-index 306bfce..c1de075 100644
---- a/bimeh-compare/src/components/QuoteCard.tsx
-+++ b/bimeh-compare/src/components/QuoteCard.tsx
-@@ -6,9 +6,10 @@ type Props = {
-   quote: Quote;
-   isCheapest: boolean;
-   onBuy: (quote: Quote) => void;
-+  disableCompare: boolean
- };
- 
--export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
-+export function QuoteCard({ quote, isCheapest, onBuy, disableCompare }: Props) {
-   const compare = useCompare();
-   const inCompare = compare.has(quote.id);
- 
-@@ -23,7 +24,14 @@ export function QuoteCard({ quote, isCheapest, onBuy }: Props) {
-       </div>
-       <span className="price">{formatPrice(quote.price)}</span>
-       <div className="card-actions">
--        <button onClick={() => compare.toggle(quote)}>
-+        <button onClick={() => {
-+          if (!inCompare && disableCompare) {
-+            alert('تنها ۳ ایتم برای مقایسه میتوانید انتخاب کنید')
-+            return
-+          } else {
-+            compare.toggle(quote)
-+          }
-+        }}>
-           {inCompare ? 'حذف از مقایسه' : 'مقایسه'}
-         </button>
-         <button className="primary" onClick={() => onBuy(quote)}>
-diff --git a/bimeh-compare/src/hooks/useCompanies.ts b/bimeh-compare/src/hooks/useCompanies.ts
+diff --git a/ersalyar/src/api/querykeys.ts b/ersalyar/src/api/querykeys.ts
 new file mode 100644
-index 0000000..4029f1c
+index 0000000..469195a
 --- /dev/null
-+++ b/bimeh-compare/src/hooks/useCompanies.ts
-@@ -0,0 +1,8 @@
-+import { useQuery } from "@tanstack/react-query";
-+
-+export function useCompanies({q} : {q: string}) {
-+        return useQuery({
-+                queryKey: ['companies' , q],
-+                queryFn: () => {}
-+        })
++++ b/ersalyar/src/api/querykeys.ts
+@@ -0,0 +1,5 @@
++export const QUERY_KEYS = {
++        SINGLE_SHIPMENT: 'shipment',
++        SHIPMENT_LIST: 'shipments',
++        STATS: 'stats'
 +}
 \ No newline at end of file
-diff --git a/bimeh-compare/src/hooks/useCountdown.ts b/bimeh-compare/src/hooks/useCountdown.ts
-index 10e209f..04f1a5f 100644
---- a/bimeh-compare/src/hooks/useCountdown.ts
-+++ b/bimeh-compare/src/hooks/useCountdown.ts
-@@ -6,7 +6,7 @@ export function useCountdown(initial: number, onExpire: () => void) {
+diff --git a/ersalyar/src/components/ShipmentTable.tsx b/ersalyar/src/components/ShipmentTable.tsx
+index d47b531..bf8750d 100644
+--- a/ersalyar/src/components/ShipmentTable.tsx
++++ b/ersalyar/src/components/ShipmentTable.tsx
+@@ -2,44 +2,66 @@ import { Link } from 'react-router-dom';
+ import { StatusBadge } from './StatusBadge';
+ import { formatDateTime, formatPrice, formatWeight } from '../utils/format';
+ import type { Shipment } from '../types';
++import { useEffect, useState } from 'react';
  
-   useEffect(() => {
-     const id = setInterval(() => {
--      if (seconds > 0) setSeconds(seconds - 1);
-+      if (seconds > 0) setSeconds((prev) => prev -1);
-     }, 1000);
-     return () => clearInterval(id);
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-diff --git a/bimeh-compare/src/hooks/useOrders.ts b/bimeh-compare/src/hooks/useOrders.ts
-index 35797e0..9336990 100644
---- a/bimeh-compare/src/hooks/useOrders.ts
-+++ b/bimeh-compare/src/hooks/useOrders.ts
-@@ -5,7 +5,7 @@ export function useOrders() {
-   return useQuery({
-     queryKey: ['orders'],
-     queryFn: fetchOrders,
--    staleTime: 60_000,
-+    gcTime: 60_000,
-   });
- }
- 
-diff --git a/bimeh-compare/src/hooks/useQuotes.ts b/bimeh-compare/src/hooks/useQuotes.ts
-index de957e5..3241689 100644
---- a/bimeh-compare/src/hooks/useQuotes.ts
-+++ b/bimeh-compare/src/hooks/useQuotes.ts
-@@ -12,7 +12,7 @@ type Params = {
- 
- export function useQuotes({ type, page, company }: Params) {
-   return useQuery({
--    queryKey: ['quotes', page, company],
-+    queryKey: ['quotes', page, company , type],
-     queryFn: () => fetchQuotes({ type, page, pageSize: PAGE_SIZE, company }),
-     staleTime: 30_000,
-   });
-diff --git a/bimeh-compare/src/pages/QuotesPage.tsx b/bimeh-compare/src/pages/QuotesPage.tsx
-index de72e72..de493be 100644
---- a/bimeh-compare/src/pages/QuotesPage.tsx
-+++ b/bimeh-compare/src/pages/QuotesPage.tsx
-@@ -1,4 +1,4 @@
--import { useState } from 'react';
-+import { useMemo, useState } from 'react';
- import { Filters } from '../components/Filters';
- import { OrderForm } from '../components/OrderForm';
- import { Pagination } from '../components/Pagination';
-@@ -6,6 +6,7 @@ import { PriceTimer } from '../components/PriceTimer';
- import { QuoteCard } from '../components/QuoteCard';
- import { PAGE_SIZE, useQuotes } from '../hooks/useQuotes';
- import type { InsuranceType, Quote, SortOrder } from '../types';
-+import { useCompare } from '../context/CompareContext';
- 
- export function QuotesPage() {
-   const [type, setType] = useState<InsuranceType>('third-party');
-@@ -14,13 +15,26 @@ export function QuotesPage() {
-   const [page, setPage] = useState(1);
-   const [buying, setBuying] = useState<Quote | null>(null);
- 
--  const { data, isLoading } = useQuotes({ type, page, company });
-+  const resetFilters = () => {
-+    setType('third-party')
-+    setSort('default')
-+    setCompany('')
-+  }
- 
--  const items = data?.items ?? [];
--  if (sort === 'price-asc') items.sort((a, b) => a.price - b.price);
--  if (sort === 'price-desc') items.sort((a, b) => b.price - a.price);
-+  const { data, isLoading, error } = useQuotes({ type, page, company });
- 
--  const cheapest = items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
-+  const { items: comparedItems} = useCompare();
+ export function ShipmentTable({ items }: { items: Shipment[] }) {
++  const [showToast, setShowToast] = useState('')
 +
-+  const items = useMemo(() => {
-+    return data?.items ? (sort === 'price-asc' ? data?.items.sort((a, b) => a.price - b.price) :
-+      sort === 'price-desc' ? data?.items.sort((a, b) => b.price - a.price) :
-+        sort === 'default' ? data?.items :
-+          []) : []
-+  }, [sort, data])
++  useEffect(() => {
++    if(showToast === '') return
++    const timer = setTimeout(() => {
++      setShowToast('')
++    } , 500)
++  } , [showToast])
 +
-+  // console.log({sort} , {items})
-+
-+  const cheapest = items && items.length > 0 ? Math.min(...items.map((q) => q.price)) : null;
- 
    return (
-     <div className="page">
-@@ -28,9 +42,13 @@ export function QuotesPage() {
-         type={type}
-         sort={sort}
-         company={company}
--        onTypeChange={setType}
-+        onTypeChange={(type) => {
-+          setType(type)
-+          setPage(1)
-+        }}
-         onSortChange={setSort}
-         onCompanyChange={setCompany}
-+        resetFilters={resetFilters}
-       />
- 
-       <PriceTimer />
-@@ -47,6 +65,7 @@ export function QuotesPage() {
-               quote={quote}
-               isCheapest={quote.price === cheapest}
-               onBuy={setBuying}
-+              disableCompare={comparedItems?.length > 2}
-             />
-           ))}
-         </ul>
-@@ -55,6 +74,11 @@ export function QuotesPage() {
-       {data && <Pagination page={page} total={data.total} pageSize={PAGE_SIZE} onChange={setPage} />}
- 
-       {buying && <OrderForm quote={buying} onClose={() => setBuying(null)} />}
-+
-+      {error && (
-+        <p>{error?.response?.data?.message || 'خطایی رخ داد'}</p>
-+
-+      )}
-     </div>
+-    <div className="table-wrap">
+-      <table className="shipments">
+-        <thead>
+-          <tr>
+-            <th>کد رهگیری</th>
+-            <th>گیرنده</th>
+-            <th>شهر</th>
+-            <th>وزن</th>
+-            <th>هزینه‌ی ارسال</th>
+-            <th>پرداخت در محل</th>
+-            <th>وضعیت</th>
+-            <th>تاریخ ثبت</th>
+-          </tr>
+-        </thead>
+-        <tbody>
+-          {items.map((s) => (
+-            <tr key={s.id}>
+-              <td>
+-                <Link to={`/shipments/${s.id}`} className="code">
+-                  {s.trackingCode}
+-                </Link>
+-              </td>
+-              <td>{s.receiver}</td>
+-              <td>{s.city}</td>
+-              <td>{formatWeight(s.weightKg)}</td>
+-              <td>{formatPrice(s.cost)}</td>
+-              <td>{s.cod > 0 ? formatPrice(s.cod) : '—'}</td>
+-              <td>
+-                <StatusBadge status={s.status} />
+-              </td>
+-              <td>{formatDateTime(s.createdAt)}</td>
++    <>
++      {showToast &&
++        <div className='toast'>کپی شد!</div>}
++      <div className="table-wrap">
++        <table className="shipments">
++          <thead>
++            <tr>
++              <th>کد رهگیری</th>
++              <th>گیرنده</th>
++              <th>شهر</th>
++              <th>وزن</th>
++              <th>هزینه‌ی ارسال</th>
++              <th>پرداخت در محل</th>
++              <th>وضعیت</th>
++              <th>تاریخ ثبت</th>
+             </tr>
+-          ))}
+-        </tbody>
+-      </table>
+-    </div>
++          </thead>
++          <tbody>
++            {items.map((s) => (
++              <tr key={s.id}>
++                <td>
++                  <button onClick={async () => {
++                    try {
++                      await navigator.clipboard.writeText(s.trackingCode)
++                      setShowToast('کپی شد')
++                    } catch {
++                      setShowToast('خطایی رخ داد')
++                    }
++                  }}>کپی</button>
++                  <Link to={`/shipments/${s.id}`} className="code">
++                    {s.trackingCode}
++                  </Link>
++                </td>
++                <td>{s.receiver}</td>
++                <td>{s.city}</td>
++                <td>{formatWeight(s.weightKg)}</td>
++                <td>{formatPrice(s.cost)}</td>
++                <td>{s.cod > 0 ? formatPrice(s.cod) : '—'}</td>
++                <td>
++                  <StatusBadge status={s.status} />
++                </td>
++                <td>{formatDateTime(s.createdAt)}</td>
++              </tr>
++            ))}
++          </tbody>
++        </table>
++      </div>
++    </>
    );
  }
-diff --git a/bimeh-compare/src/styles.css b/bimeh-compare/src/styles.css
-index cfb3ade..41d6209 100644
---- a/bimeh-compare/src/styles.css
-+++ b/bimeh-compare/src/styles.css
-@@ -38,7 +38,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
- .header a { color: #c7d2e5; text-decoration: none; }
- .header a.active { color: #fff; font-weight: bold; }
+diff --git a/ersalyar/src/components/StatusTabs.tsx b/ersalyar/src/components/StatusTabs.tsx
+index 197ff53..044fd69 100644
+--- a/ersalyar/src/components/StatusTabs.tsx
++++ b/ersalyar/src/components/StatusTabs.tsx
+@@ -1,19 +1,23 @@
++import { useStats } from "../hooks/useStats";
++
+ type Tab = { value: string; label: string };
  
--.container { max-width: 860px; margin: 0 auto; padding: 0 16px; }
-+.container { max-width: 860px; margin: 0 auto; padding: 0 16px;  }
- .page { padding-top: 16px; }
+-const TABS: Tab[] = [
+-  { value: '', label: 'همه' },
+-  { value: 'PENDING', label: 'در انتظار' },
+-  { value: 'IN_TRANSIT', label: 'در راه' },
+-  { value: 'delivered', label: 'تحویل‌شده' },
+-  { value: 'CANCELLED', label: 'لغوشده' },
+-];
  
- /* ---------- filters ---------- */
-@@ -51,8 +51,8 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
-   border-radius: 12px;
-   padding: 16px;
+ type Props = {
+   value: string;
+   onChange: (value: string) => void;
+ };
+ 
++const TABS: Tab[] = [
++  { value: '', label: 'همه' },
++  { value: 'PENDING', label: 'در انتظار' },
++  { value: 'IN_TRANSIT', label: 'در راه' },
++  { value: 'DELIVERED', label: 'تحویل‌شده' },
++  { value: 'CANCELLED', label: 'لغوشده' },
++];
+ export function StatusTabs({ value, onChange }: Props) {
++  const { data } = useStats()
++
+   return (
+     <div className="tabs" role="tablist">
+       {TABS.map((tab) => (
+@@ -24,7 +28,7 @@ export function StatusTabs({ value, onChange }: Props) {
+           className={tab.value === value ? 'tab tab--active' : 'tab'}
+           onClick={() => onChange(tab.value)}
+         >
+-          {tab.label}
++          {tab.label + (data?.[tab.value] ?? '')}
+         </button>
+       ))}
+     </div>
+diff --git a/ersalyar/src/hooks/useShipment.ts b/ersalyar/src/hooks/useShipment.ts
+index a236040..2fd7615 100644
+--- a/ersalyar/src/hooks/useShipment.ts
++++ b/ersalyar/src/hooks/useShipment.ts
+@@ -1,22 +1,15 @@
+ import { useEffect } from 'react';
+ import { useQuery } from '@tanstack/react-query';
+ import { fetchShipment } from '../api/shipments';
++import { QUERY_KEYS } from '../api/querykeys';
+ 
+ export function useShipment(id: string) {
+   const query = useQuery({
+-    queryKey: ['shipment'],
++    queryKey: [QUERY_KEYS.SINGLE_SHIPMENT],
+     queryFn: () => fetchShipment(id),
+-    staleTime: 30_000,
++    refetchInterval: 5_000,
++    staleTime: 0
+   });
+ 
+-  const { refetch } = query;
+-
+-  // پیگیری زنده: هر ۵ ثانیه وضعیت مرسوله رو تازه کن
+-  useEffect(() => {
+-    setInterval(() => {
+-      refetch();
+-    }, 5_000);
+-  }, [refetch]);
+-
+   return query;
  }
--.filters-row { display: flex; gap: 12px; }
--.filters-row > .field { flex: 0 0 240px; }
-+.filters-row { display: flex; gap: 12px; align-items: flex-end; }
-+.filters-row > .field { flex: 0 0 200px; }
+diff --git a/ersalyar/src/hooks/useShipmentMutations.ts b/ersalyar/src/hooks/useShipmentMutations.ts
+index 3969142..b8e1095 100644
+--- a/ersalyar/src/hooks/useShipmentMutations.ts
++++ b/ersalyar/src/hooks/useShipmentMutations.ts
+@@ -1,17 +1,15 @@
+ import { useMutation, useQueryClient } from '@tanstack/react-query';
+ import { cancelShipment, createShipment } from '../api/shipments';
+ import type { ShipmentDetail } from '../types';
++import { QUERY_KEYS } from '../api/querykeys';
  
- .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
- .filters .field { margin-bottom: 0; }
-@@ -63,6 +63,17 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
-   border-radius: 8px;
+ export function useCancelShipment() {
+   const queryClient = useQueryClient();
+ 
+   return useMutation({
+     mutationFn: cancelShipment,
+-    // به‌روزرسانی خوش‌بینانه: کاربر فوراً نتیجه رو ببینه
+     onMutate: () => {
+-      queryClient.setQueryData<ShipmentDetail>(['shipment'], (old) =>
+-        old ? { ...old, status: 'CANCELLED' } : old
+-      );
++      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SINGLE_SHIPMENT, QUERY_KEYS.STATS] })
+     },
+   });
+ }
+@@ -22,7 +20,7 @@ export function useCreateShipment() {
+   return useMutation({
+     mutationFn: createShipment,
+     onSuccess: () => {
+-      queryClient.invalidateQueries({ queryKey: ['shipments'] });
++      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SHIPMENT_LIST, QUERY_KEYS.STATS] });
+     },
+   });
+ }
+diff --git a/ersalyar/src/hooks/useShipments.ts b/ersalyar/src/hooks/useShipments.ts
+index 37e4558..f9a7b10 100644
+--- a/ersalyar/src/hooks/useShipments.ts
++++ b/ersalyar/src/hooks/useShipments.ts
+@@ -6,6 +6,6 @@ export function useShipments(status: string, q: string) {
+     queryKey: ['shipments', status, q],
+     queryFn: ({ pageParam }) => fetchShipments({ status, q, page: pageParam }),
+     initialPageParam: 1,
+-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page : undefined),
++    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+   });
+ }
+diff --git a/ersalyar/src/hooks/useStats.ts b/ersalyar/src/hooks/useStats.ts
+index 55414c0..4d82cb1 100644
+--- a/ersalyar/src/hooks/useStats.ts
++++ b/ersalyar/src/hooks/useStats.ts
+@@ -1,10 +1,11 @@
+ import { useQuery } from '@tanstack/react-query';
+ import { fetchStats } from '../api/shipments';
++import { QUERY_KEYS } from '../api/querykeys';
+ 
+ export function useStats() {
+   return useQuery({
+-    queryKey: ['stats'],
++    queryKey: [QUERY_KEYS.STATS],
+     queryFn: fetchStats,
+-    staleTime: Infinity,
++    staleTime: 10_000,
+   });
+ }
+diff --git a/ersalyar/src/pages/NewShipmentPage.tsx b/ersalyar/src/pages/NewShipmentPage.tsx
+index f63edde..edec59e 100644
+--- a/ersalyar/src/pages/NewShipmentPage.tsx
++++ b/ersalyar/src/pages/NewShipmentPage.tsx
+@@ -25,8 +25,10 @@ export function NewShipmentPage() {
+   const city = watch('city');
+   const hasCod = watch('hasCod');
+ 
++  console.log({errors})
++
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+-  const estimatedCost = useMemo(() => calculateCost(city, Number(weight)), [weight]);
++  const estimatedCost = useMemo(() => calculateCost(city, Number(weight)), [weight , city]);
+ 
+   const onSubmit = (values: ShipmentForm) => {
+     create.mutate(
+@@ -34,7 +36,7 @@ export function NewShipmentPage() {
+         receiver: values.receiver,
+         city: values.city,
+         weightKg: values.weightKg,
+-        cod: values.hasCod ? values.codAmount : 0,
++        cod: values.hasCod ? Number(values.codAmount) : 0,
+       },
+       { onSuccess: () => navigate('/') }
+     );
+@@ -66,7 +68,7 @@ export function NewShipmentPage() {
+ 
+         <div className="field">
+           <label htmlFor="weightKg">وزن (کیلوگرم)</label>
+-          <input id="weightKg" type="number" step="0.5" {...register('weightKg')} />
++          <input id="weightKg" type="number" step={.5} {...register('weightKg', { valueAsNumber: true })} />
+           {errors.weightKg && <span className="error">{errors.weightKg.message}</span>}
+         </div>
+ 
+@@ -78,7 +80,7 @@ export function NewShipmentPage() {
+         {hasCod && (
+           <div className="field">
+             <label htmlFor="codAmount">مبلغ پرداخت در محل (ریال)</label>
+-            <input id="codAmount" type="number" {...register('codAmount', { valueAsNumber: true })} />
++            <input id="codAmount" type="number" {...register('codAmount')} />
+             {errors.codAmount && <span className="error">{errors.codAmount.message}</span>}
+           </div>
+         )}
+diff --git a/ersalyar/src/pages/ShipmentDetailPage.tsx b/ersalyar/src/pages/ShipmentDetailPage.tsx
+index d7ce5b5..13f70a9 100644
+--- a/ersalyar/src/pages/ShipmentDetailPage.tsx
++++ b/ersalyar/src/pages/ShipmentDetailPage.tsx
+@@ -8,14 +8,15 @@ import { formatDateTime, formatPrice, formatWeight } from '../utils/format';
+ 
+ export function ShipmentDetailPage() {
+   const { id = '' } = useParams();
+-  const { data: shipment, isLoading, isError } = useShipment(id);
++  const { data: shipment, isLoading, isError , isFetching } = useShipment(id);
+   const cancel = useCancelShipment();
+   const [confirming, setConfirming] = useState(false);
+ 
+-  if (isLoading) return <p className="status">در حال دریافت جزئیات...</p>;
++  if (isLoading || isFetching) return <p className="status">در حال دریافت جزئیات...</p>;
+   if (isError || !shipment) return <p className="status">مرسوله پیدا نشد.</p>;
+ 
+   return (
++    <>
+     <div className="page">
+       <Link to="/" className="back">
+         → بازگشت به لیست
+@@ -54,12 +55,13 @@ export function ShipmentDetailPage() {
+         </ol>
+       </section>
+ 
+-      {shipment.status !== 'CANCELLED' && (
++      {shipment.status !== 'CANCELLED' && shipment.status!=='DELIVERED' && (
+         <button className="danger" onClick={() => setConfirming(true)}>
+           لغو مرسوله
+         </button>
+       )}
+ 
++    </div>
+       {confirming && (
+         <ConfirmDialog
+           title="لغو مرسوله"
+@@ -72,6 +74,6 @@ export function ShipmentDetailPage() {
+           }}
+         />
+       )}
+-    </div>
++    </>
+   );
+ }
+diff --git a/ersalyar/src/schemas/shipment.ts b/ersalyar/src/schemas/shipment.ts
+index dd893ce..530c186 100644
+--- a/ersalyar/src/schemas/shipment.ts
++++ b/ersalyar/src/schemas/shipment.ts
+@@ -8,12 +8,18 @@ export const shipmentSchema = z.object({
+     .positive('وزن باید بیشتر از صفر باشد')
+     .max(30, 'حداکثر وزن ۳۰ کیلوگرم است'),
+   hasCod: z.boolean(),
+-  codAmount: z
+-    .number({
+-      invalid_type_error: 'مبلغ را به عدد وارد کنید',
+-      required_error: 'مبلغ پرداخت در محل را وارد کنید',
+-    })
+-    .positive('مبلغ باید بیشتر از صفر باشد'),
++  codAmount: z.preprocess(
++    (v) => (v === '' || v == null || (typeof v === 'number' && Number.isNaN(v)) ? undefined : v),
++    z.number().positive('مبلغ باید بیشتر از صفر باشد').optional(),
++  ),
++}).superRefine((data, ctx) => {
++  if (data.hasCod && data.codAmount === undefined) {
++    ctx.addIssue({
++      code: z.ZodIssueCode.custom,
++      path: ['codAmount'],
++      message: 'مبلغ پرداخت در محل را وارد کنید',
++    });
++  }
+ });
+ 
+ export type ShipmentForm = z.infer<typeof shipmentSchema>;
+diff --git a/ersalyar/src/styles.css b/ersalyar/src/styles.css
+index 36127c5..6fb8415 100644
+--- a/ersalyar/src/styles.css
++++ b/ersalyar/src/styles.css
+@@ -1,4 +1,6 @@
+-* { box-sizing: border-box; }
++* { 
++  box-sizing: border-box;
++ }
+ 
+ body {
+   margin: 0;
+@@ -74,7 +76,7 @@ button.danger { background: #c62828; border-color: #c62828; color: #fff; }
    background: #fff;
  }
-+.remove-filters-button-container {
-+  display: flex;
-+  direction: column;
-+  justify-content: end;
-+  height: 100%;
+ 
+-.table-wrap { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; }
++.table-wrap { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; overflow-x: auto; }
+ .shipments { width: 100%; border-collapse: collapse; }
+ .shipments th, .shipments td {
+   padding: 12px;
+@@ -132,6 +134,23 @@ button.danger { background: #c62828; border-color: #c62828; color: #fff; }
+   padding: 16px;
+   background: rgba(16, 42, 67, 0.55);
+ }
+-.modal { width: 100%; max-width: 420px; background: #fff; border-radius: 14px; padding: 20px; }
++
++.modal {
++  width: 100%;
++  max-width: 420px;
++  background: #fff;
++  border-radius: 14px;
++  padding: 20px;
 +}
-+.remove-filters-button {
+ .modal h2 { margin: 0 0 8px; font-size: 18px; }
+ .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
++
++.toast {
++  position: fixed;
++  top: 20px;
++  right: 50%;
 +  width: 100px;
-+  font-size: 12px;
-+  height: 40px;
++  background-color: #bcccdc;
++  padding: 16px;
++  border-radius: 8px;
 +}
- 
- .company-search { position: relative; }
- .suggestions {
-@@ -88,7 +99,7 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
- 
- .card {
-   position: relative;
--  z-index: 2;
-+  /* z-index: 2; */
-   display: flex;
-   align-items: center;
-   gap: 16px;
-@@ -114,6 +125,9 @@ button.link { border: none; background: none; color: #2f6fed; padding: 4px 0; te
- .pagination { display: flex; justify-content: center; gap: 6px; margin: 20px 0; }
- 
- /* ---------- compare bar ---------- */
-+.compare-bar-container {
-+  margin-top: 100px;
-+}
- .compare-bar {
-   position: fixed;
-   bottom: 0;
-diff --git a/bimeh-compare/src/utils/format.ts b/bimeh-compare/src/utils/format.ts
-index 14eeb64..36af194 100644
---- a/bimeh-compare/src/utils/format.ts
-+++ b/bimeh-compare/src/utils/format.ts
-@@ -5,3 +5,10 @@ export function formatPrice(value: number) {
- export function formatDate(iso: string) {
-   return new Date(iso).toLocaleDateString('fa-IR');
- }
-+
-+export function toEnglishDigits(value: string) {
-+  return value
-+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
-+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
-+
-+}
-diff --git a/bimeh-compare/src/utils/validators.ts b/bimeh-compare/src/utils/validators.ts
-index 7ca17f2..6aee922 100644
---- a/bimeh-compare/src/utils/validators.ts
-+++ b/bimeh-compare/src/utils/validators.ts
-@@ -1,7 +1,7 @@
- export function isValidNationalCode(value: string): boolean {
-   const n = Number(value);
-   if (Number.isNaN(n)) return false;
--  return String(n).length === 10;
-+  return value.length === 10;
+diff --git a/ersalyar/src/utils/format.ts b/ersalyar/src/utils/format.ts
+index 5fbea49..6cba17f 100644
+--- a/ersalyar/src/utils/format.ts
++++ b/ersalyar/src/utils/format.ts
+@@ -1,5 +1,5 @@
+ export function formatPrice(value: number) {
+-  return `${value.toLocaleString('fa-IR')} تومان`;
++  return `${value.toLocaleString('fa-IR')} ریال`;
  }
  
- export function isValidMobile(value: string): boolean {
+ export function formatDateTime(iso: string) {
