@@ -1,4 +1,6 @@
-* { box-sizing: border-box; }
+* { 
+  box-sizing: border-box;
+ }
 
 body {
   margin: 0;
@@ -74,7 +76,7 @@ button.danger { background: #c62828; border-color: #c62828; color: #fff; }
   background: #fff;
 }
 
-.table-wrap { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; }
+.table-wrap { background: #fff; border: 1px solid #dfe5ee; border-radius: 12px; overflow-x: auto; }
 .shipments { width: 100%; border-collapse: collapse; }
 .shipments th, .shipments td {
   padding: 12px;
@@ -132,6 +134,23 @@ button.danger { background: #c62828; border-color: #c62828; color: #fff; }
   padding: 16px;
   background: rgba(16, 42, 67, 0.55);
 }
-.modal { width: 100%; max-width: 420px; background: #fff; border-radius: 14px; padding: 20px; }
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+}
 .modal h2 { margin: 0 0 8px; font-size: 18px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 50%;
+  width: 100px;
+  background-color: #bcccdc;
+  padding: 16px;
+  border-radius: 8px;
+}

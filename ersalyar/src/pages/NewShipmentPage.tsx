@@ -25,8 +25,10 @@ export function NewShipmentPage() {
   const city = watch('city');
   const hasCod = watch('hasCod');
 
+  console.log({errors})
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const estimatedCost = useMemo(() => calculateCost(city, Number(weight)), [weight]);
+  const estimatedCost = useMemo(() => calculateCost(city, Number(weight)), [weight , city]);
 
   const onSubmit = (values: ShipmentForm) => {
     create.mutate(
@@ -34,7 +36,7 @@ export function NewShipmentPage() {
         receiver: values.receiver,
         city: values.city,
         weightKg: values.weightKg,
-        cod: values.hasCod ? values.codAmount : 0,
+        cod: values.hasCod ? Number(values.codAmount) : 0,
       },
       { onSuccess: () => navigate('/') }
     );
@@ -66,7 +68,7 @@ export function NewShipmentPage() {
 
         <div className="field">
           <label htmlFor="weightKg">وزن (کیلوگرم)</label>
-          <input id="weightKg" type="number" step="0.5" {...register('weightKg')} />
+          <input id="weightKg" type="number" step={.5} {...register('weightKg', { valueAsNumber: true })} />
           {errors.weightKg && <span className="error">{errors.weightKg.message}</span>}
         </div>
 
@@ -78,7 +80,7 @@ export function NewShipmentPage() {
         {hasCod && (
           <div className="field">
             <label htmlFor="codAmount">مبلغ پرداخت در محل (ریال)</label>
-            <input id="codAmount" type="number" {...register('codAmount', { valueAsNumber: true })} />
+            <input id="codAmount" type="number" {...register('codAmount')} />
             {errors.codAmount && <span className="error">{errors.codAmount.message}</span>}
           </div>
         )}

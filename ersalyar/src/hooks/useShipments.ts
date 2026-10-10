@@ -6,6 +6,6 @@ export function useShipments(status: string, q: string) {
     queryKey: ['shipments', status, q],
     queryFn: ({ pageParam }) => fetchShipments({ status, q, page: pageParam }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page : undefined),
+    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
   });
 }

@@ -1,5 +1,5 @@
 export function formatPrice(value: number) {
-  return `${value.toLocaleString('fa-IR')} تومان`;
+  return `${value.toLocaleString('fa-IR')} ریال`;
 }
 
 export function formatDateTime(iso: string) {

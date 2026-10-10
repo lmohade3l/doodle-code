@@ -8,14 +8,15 @@ import { formatDateTime, formatPrice, formatWeight } from '../utils/format';
 
 export function ShipmentDetailPage() {
   const { id = '' } = useParams();
-  const { data: shipment, isLoading, isError } = useShipment(id);
+  const { data: shipment, isLoading, isError , isFetching } = useShipment(id);
   const cancel = useCancelShipment();
   const [confirming, setConfirming] = useState(false);
 
-  if (isLoading) return <p className="status">در حال دریافت جزئیات...</p>;
+  if (isLoading || isFetching) return <p className="status">در حال دریافت جزئیات...</p>;
   if (isError || !shipment) return <p className="status">مرسوله پیدا نشد.</p>;
 
   return (
+    <>
     <div className="page">
       <Link to="/" className="back">
         → بازگشت به لیست
@@ -54,12 +55,13 @@ export function ShipmentDetailPage() {
         </ol>
       </section>
 
-      {shipment.status !== 'CANCELLED' && (
+      {shipment.status !== 'CANCELLED' && shipment.status!=='DELIVERED' && (
         <button className="danger" onClick={() => setConfirming(true)}>
           لغو مرسوله
         </button>
       )}
 
+    </div>
       {confirming && (
         <ConfirmDialog
           title="لغو مرسوله"
@@ -72,6 +74,6 @@ export function ShipmentDetailPage() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }

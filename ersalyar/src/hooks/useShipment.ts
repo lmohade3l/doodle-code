@@ -1,22 +1,15 @@
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchShipment } from '../api/shipments';
+import { QUERY_KEYS } from '../api/querykeys';
 
 export function useShipment(id: string) {
   const query = useQuery({
-    queryKey: ['shipment'],
+    queryKey: [QUERY_KEYS.SINGLE_SHIPMENT],
     queryFn: () => fetchShipment(id),
-    staleTime: 30_000,
+    refetchInterval: 5_000,
+    staleTime: 0
   });
-
-  const { refetch } = query;
-
-  // پیگیری زنده: هر ۵ ثانیه وضعیت مرسوله رو تازه کن
-  useEffect(() => {
-    setInterval(() => {
-      refetch();
-    }, 5_000);
-  }, [refetch]);
 
   return query;
 }
